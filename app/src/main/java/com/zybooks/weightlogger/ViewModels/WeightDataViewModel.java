@@ -1,44 +1,36 @@
 package com.zybooks.weightlogger.ViewModels;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
-
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
-import com.zybooks.weightlogger.Utilities.NotificationHelper;
 import com.zybooks.weightlogger.Data.UserRepository;
 import com.zybooks.weightlogger.Data.UserSessionManager;
 import com.zybooks.weightlogger.Data.WeightDatabaseHelper;
 import com.zybooks.weightlogger.Data.WeightRepository;
-import com.zybooks.weightlogger.Utilities.InputValidator;
-import com.zybooks.weightlogger.Utilities.InputValidator.ValidationResult;
-
+import com.zybooks.weightlogger.Utilities.NotificationHelper;
 import java.util.List;
 
 /**
  * ViewModel for weight data operations with enhanced validation.
- * Handles tracking, updating, and visualizing weight entries.
+ * Extends BaseValidationViewModel to leverage centralized validation logic.
  */
-public class WeightDataViewModel extends AndroidViewModel {
+public class WeightDataViewModel extends BaseValidationViewModel {
     private static final double GOAL_PROXIMITY_THRESHOLD = 5.0;
+
     private final WeightRepository weightRepository;
     private final UserRepository userRepository;
     private final UserSessionManager sessionManager;
     private final NotificationHelper notificationHelper;
 
-    // LiveData for weight entries
+    // Weight entries data
     private final MutableLiveData<List<WeightDatabaseHelper.WeightEntry>> weightEntriesLiveData = new MutableLiveData<>();
-    private final MutableLiveData<String> statusMessageLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> profileUpdateNeededLiveData = new MutableLiveData<>();
 
-    // Field validation for weight entry
+    // Validation for new weight entry
     private final MutableLiveData<Boolean> dateValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> weightValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> formValidLiveData = new MutableLiveData<>(false);
-
     private final MutableLiveData<String> dateErrorLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> weightErrorLiveData = new MutableLiveData<>();
 
@@ -49,8 +41,6 @@ public class WeightDataViewModel extends AndroidViewModel {
      */
     public WeightDataViewModel(@NonNull Application application) {
         super(application);
-
-        // Initialize repositories and helpers
         weightRepository = new WeightRepository(application);
         userRepository = new UserRepository(application);
         sessionManager = new UserSessionManager(application);
@@ -64,19 +54,9 @@ public class WeightDataViewModel extends AndroidViewModel {
     public LiveData<List<WeightDatabaseHelper.WeightEntry>> getWeightEntriesLiveData() {
         return weightEntriesLiveData;
     }
-
-    public LiveData<String> getStatusMessageLiveData() {
-        return statusMessageLiveData;
-    }
-
-    public LiveData<Boolean> getProfileUpdateNeededLiveData() {
-        return profileUpdateNeededLiveData;
-    }
-
-//    public LiveData<Boolean> getDateValidLiveData() { return dateValidLiveData; }
-//    public LiveData<Boolean> getWeightValidLiveData() { return weightValidLiveData; }
+    public LiveData<String> getStatusMessageLiveData() { return statusMessageLiveData; }
+    public LiveData<Boolean> getProfileUpdateNeededLiveData() { return profileUpdateNeededLiveData; }
     public LiveData<Boolean> getFormValidLiveData() { return formValidLiveData; }
-
     public LiveData<String> getDateErrorLiveData() { return dateErrorLiveData; }
     public LiveData<String> getWeightErrorLiveData() { return weightErrorLiveData; }
 
@@ -101,6 +81,7 @@ public class WeightDataViewModel extends AndroidViewModel {
             statusMessageLiveData.setValue("No weight entries yet");
         }
     }
+
     /**
      * Refresh weight entries from the repository for the current user after login.
      */
@@ -112,26 +93,30 @@ public class WeightDataViewModel extends AndroidViewModel {
     }
 
     /**
-     * Validates date input.
+     * Validates date input using the ValidationService.
      *
      * @param dateStr The date string to validate
      */
     public void validateDate(String dateStr) {
-        ValidationResult result = InputValidator.validateDate(dateStr);
-        dateValidLiveData.setValue(result.isValid());
-        dateErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validateDate(
+                dateStr,
+                dateValidLiveData,
+                dateErrorLiveData
+        );
         updateFormValidity();
     }
 
     /**
-     * Validates weight input.
+     * Validates weight input using the ValidationService.
      *
      * @param weightStr The weight string to validate
      */
     public void validateWeight(String weightStr) {
-        ValidationResult result = InputValidator.validateWeight(weightStr);
-        weightValidLiveData.setValue(result.isValid());
-        weightErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validateWeight(
+                weightStr,
+                weightValidLiveData,
+                weightErrorLiveData
+        );
         updateFormValidity();
     }
 
@@ -139,13 +124,11 @@ public class WeightDataViewModel extends AndroidViewModel {
      * Updates the form validity state based on individual field validities.
      */
     private void updateFormValidity() {
-        Boolean dateValid = dateValidLiveData.getValue();
-        Boolean weightValid = weightValidLiveData.getValue();
-
-        boolean formValid = dateValid != null && dateValid &&
-                weightValid != null && weightValid;
-
-        formValidLiveData.setValue(formValid);
+        updateFormValidity(
+                formValidLiveData,
+                dateValidLiveData.getValue(),
+                weightValidLiveData.getValue()
+        );
     }
 
     /**
@@ -306,8 +289,6 @@ public class WeightDataViewModel extends AndroidViewModel {
         }
     }
 
-
-
     /**
      * Resets validation states for adding a new entry.
      */
@@ -315,7 +296,6 @@ public class WeightDataViewModel extends AndroidViewModel {
         dateValidLiveData.setValue(false);
         weightValidLiveData.setValue(false);
         formValidLiveData.setValue(false);
-
         dateErrorLiveData.setValue(null);
         weightErrorLiveData.setValue(null);
     }

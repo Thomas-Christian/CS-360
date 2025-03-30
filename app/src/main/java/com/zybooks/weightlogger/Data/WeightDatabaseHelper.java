@@ -2,10 +2,10 @@ package com.zybooks.weightlogger.Data;
 
 import android.content.ContentValues;
 import android.content.Context;
-
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-
+import android.database.sqlite.SQLiteException;
+import com.zybooks.weightlogger.Utilities.ErrorHandler;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +15,8 @@ import java.util.List;
  * Extends the base DatabaseHelper with weight-specific functionality.
  */
 public class WeightDatabaseHelper extends DatabaseHelper {
+    private final Context context;
+    private static final String COMPONENT_NAME = "WeightDatabaseHelper";
 
     /**
      * Creates a new WeightDatabaseHelper instance.
@@ -23,6 +25,7 @@ public class WeightDatabaseHelper extends DatabaseHelper {
      */
     public WeightDatabaseHelper(Context context) {
         super(context);
+        this.context = context;
     }
 
     /**
@@ -87,14 +90,24 @@ public class WeightDatabaseHelper extends DatabaseHelper {
      * @return true if insertion was successful, false otherwise
      */
     public boolean addWeightEntry(int userId, String date, double weight) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("user_id", userId);
-        values.put("date", date);
-        values.put("weight", weight);
-        long result = db.insert("weight_entries", null, values);
-        db.close();
-        return result != -1;
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put("user_id", userId);
+            values.put("date", date);
+            values.put("weight", weight);
+            long result = db.insert("weight_entries", null, values);
+            return result != -1;
+        } catch (SQLiteException e) {
+            ErrorHandler.handleException(context, e, COMPONENT_NAME, "addWeightEntry",
+                    ErrorHandler.Severity.ERROR, "Failed to add weight entry");
+            return false;
+        } finally {
+            if (db != null && db.isOpen()) {
+                db.close();
+            }
+        }
     }
 
     /**
@@ -106,13 +119,23 @@ public class WeightDatabaseHelper extends DatabaseHelper {
      * @return true if update was successful, false otherwise
      */
     public boolean updateWeightEntry(int entryId, String date, double weight) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        ContentValues values = new ContentValues();
-        values.put("date", date);
-        values.put("weight", weight);
-        int rowsAffected = db.update("weight_entries", values, "id = ?", new String[]{String.valueOf(entryId)});
-        db.close();
-        return rowsAffected > 0;
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+            ContentValues values = new ContentValues();
+            values.put("date", date);
+            values.put("weight", weight);
+            int rowsAffected = db.update("weight_entries", values, "id = ?", new String[]{String.valueOf(entryId)});
+            return rowsAffected > 0;
+        } catch (SQLiteException e) {
+            ErrorHandler.handleException(context, e, COMPONENT_NAME, "updateWeightEntry",
+                    ErrorHandler.Severity.ERROR, "Failed to update weight entry");
+            return false;
+        } finally {
+            if (db != null && db.isOpen()) {
+                db.close();
+            }
+        }
     }
 
     /**
@@ -122,10 +145,20 @@ public class WeightDatabaseHelper extends DatabaseHelper {
      * @return true if deletion was successful, false otherwise
      */
     public boolean deleteWeightEntry(int entryId) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        int rowsAffected = db.delete("weight_entries", "id = ?", new String[]{String.valueOf(entryId)});
-        db.close();
-        return rowsAffected > 0;
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+            int rowsAffected = db.delete("weight_entries", "id = ?", new String[]{String.valueOf(entryId)});
+            return rowsAffected > 0;
+        } catch (SQLiteException e) {
+            ErrorHandler.handleException(context, e, COMPONENT_NAME, "deleteWeightEntry",
+                    ErrorHandler.Severity.ERROR, "Failed to delete weight entry");
+            return false;
+        } finally {
+            if (db != null && db.isOpen()) {
+                db.close();
+            }
+        }
     }
 
     /**
@@ -137,33 +170,52 @@ public class WeightDatabaseHelper extends DatabaseHelper {
      */
     public List<WeightEntry> getWeightEntries(int userId) {
         List<WeightEntry> entries = new ArrayList<>();
-        SQLiteDatabase db = this.getReadableDatabase();
+        SQLiteDatabase db = null;
+        Cursor tableCheck = null;
+        Cursor cursor = null;
 
-        Cursor tableCheck = db.rawQuery(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
-                new String[]{"weight_entries"}
-        );
+        try {
+            db = this.getReadableDatabase();
 
-        boolean tableExists = tableCheck.getCount() > 0;
-        tableCheck.close();
+            // Check if the weight_entries table exists
+            tableCheck = db.rawQuery(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name=?",
+                    new String[]{"weight_entries"}
+            );
 
-        if (!tableExists) {
-            db.execSQL(CREATE_WEIGHT_TABLE);
-            db.close();
+            boolean tableExists = tableCheck.getCount() > 0;
+            tableCheck.close();
+            tableCheck = null;
+
+            if (!tableExists) {
+                db.execSQL(CREATE_WEIGHT_TABLE);
+                return entries;
+            }
+
+            cursor = db.rawQuery(
+                    "SELECT id, date, weight FROM weight_entries WHERE user_id = ? ORDER BY date DESC",
+                    new String[]{String.valueOf(userId)}
+            );
+
+            while (cursor.moveToNext()) {
+                entries.add(new WeightEntry(cursor.getInt(0), cursor.getString(1), cursor.getDouble(2)));
+            }
+
             return entries;
+        } catch (SQLiteException e) {
+            ErrorHandler.handleException(context, e, COMPONENT_NAME, "getWeightEntries",
+                    ErrorHandler.Severity.ERROR, null);
+            return entries;
+        } finally {
+            if (tableCheck != null) {
+                tableCheck.close();
+            }
+            if (cursor != null) {
+                cursor.close();
+            }
+            if (db != null && db.isOpen()) {
+                db.close();
+            }
         }
-
-        Cursor cursor = db.rawQuery(
-                "SELECT id, date, weight FROM weight_entries WHERE user_id = ? ORDER BY date DESC",
-                new String[]{String.valueOf(userId)}
-        );
-
-        while (cursor.moveToNext()) {
-            entries.add(new WeightEntry(cursor.getInt(0), cursor.getString(1), cursor.getDouble(2)));
-        }
-
-        cursor.close();
-        db.close();
-        return entries;
     }
 }

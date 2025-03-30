@@ -1,50 +1,46 @@
 package com.zybooks.weightlogger.ViewModels;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
-
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
 import com.zybooks.weightlogger.Data.UserRepository;
 import com.zybooks.weightlogger.Data.UserSessionManager;
-import com.zybooks.weightlogger.Utilities.InputValidator;
-import com.zybooks.weightlogger.Utilities.InputValidator.ValidationResult;
 
 /**
- * ViewModel for login operations with enhanced validation.
- * Handles user authentication and validation of login credentials.
+ * ViewModel for login operations.
  */
-public class LoginViewModel extends AndroidViewModel {
+public class LoginViewModel extends BaseValidationViewModel {
     private final UserRepository userRepository;
     private final UserSessionManager sessionManager;
-    private final MutableLiveData<String> statusMessageLiveData = new MutableLiveData<>();
+
+    // LiveData for UI updates
     private final MutableLiveData<Boolean> loginSuccessLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> dataRefreshNeededLiveData = new MutableLiveData<>();
 
-    // Field validation
+    // Validation states
     private final MutableLiveData<Boolean> usernameValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> passwordValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> formValidLiveData = new MutableLiveData<>(false);
 
-    // Field error messages
+    // Error messages
     private final MutableLiveData<String> usernameErrorLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> passwordErrorLiveData = new MutableLiveData<>();
 
+    /**
+     * Creates a new LoginViewModel.
+     *
+     * @param application The application context
+     */
     public LoginViewModel(@NonNull Application application) {
         super(application);
         userRepository = new UserRepository(application);
         sessionManager = new UserSessionManager(application);
     }
 
-    // LiveData getters
+    // Getters for LiveData
     public LiveData<String> getStatusMessageLiveData() { return statusMessageLiveData; }
     public LiveData<Boolean> getLoginSuccessLiveData() { return loginSuccessLiveData; }
-
-//    public LiveData<Boolean> getUsernameValidLiveData() { return usernameValidLiveData; }
-//    public LiveData<Boolean> getPasswordValidLiveData() { return passwordValidLiveData; }
     public LiveData<Boolean> getFormValidLiveData() { return formValidLiveData; }
     public LiveData<String> getUsernameErrorLiveData() { return usernameErrorLiveData; }
     public LiveData<String> getPasswordErrorLiveData() { return passwordErrorLiveData; }
@@ -52,46 +48,46 @@ public class LoginViewModel extends AndroidViewModel {
 
     /**
      * Validates the username field.
-     * For login, we only require that the username is not empty and meets basic criteria.
      *
      * @param username The username to validate
      */
     public void validateUsername(String username) {
-        ValidationResult result = InputValidator.validateUsername(username);
-        usernameValidLiveData.setValue(result.isValid());
-        usernameErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validateUsername(
+                username,
+                usernameValidLiveData,
+                usernameErrorLiveData
+        );
         updateFormValidity();
     }
 
     /**
      * Validates the password field.
-     * For login, we only require that the password is not empty.
      *
      * @param password The password to validate
      */
     public void validatePassword(String password) {
-        ValidationResult result = InputValidator.validateRequired(password, "Password");
-        passwordValidLiveData.setValue(result.isValid());
-        passwordErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validatePassword(
+                password,
+                passwordValidLiveData,
+                passwordErrorLiveData,
+                null // No need for strength indicator in login
+        );
         updateFormValidity();
     }
 
     /**
-     * Updates the overall form validity state based on individual field validities.
+     * Updates the form validity state based on individual field validities.
      */
     private void updateFormValidity() {
-        Boolean usernameValid = usernameValidLiveData.getValue();
-        Boolean passwordValid = passwordValidLiveData.getValue();
-
-        boolean formValid = usernameValid != null && usernameValid &&
-                passwordValid != null && passwordValid;
-
-        formValidLiveData.setValue(formValid);
+        super.updateFormValidity(
+                formValidLiveData,
+                usernameValidLiveData.getValue(),
+                passwordValidLiveData.getValue()
+        );
     }
 
     /**
      * Attempts to log in a user with the provided credentials.
-     * Performs validation before attempting authentication.
      *
      * @param username The username for authentication
      * @param password The password for authentication
@@ -112,7 +108,7 @@ public class LoginViewModel extends AndroidViewModel {
             sessionManager.saveLoginSession(username);
             statusMessageLiveData.setValue("Login successful!");
             loginSuccessLiveData.setValue(true);
-            dataRefreshNeededLiveData.setValue(true); // Signal that data needs refreshing
+            dataRefreshNeededLiveData.setValue(true);
         } else {
             statusMessageLiveData.setValue("Invalid username or password.");
             loginSuccessLiveData.setValue(false);
@@ -123,7 +119,6 @@ public class LoginViewModel extends AndroidViewModel {
      * Signals that the user wants to sign up for a new account.
      */
     public void signUp() {
-        // Just signal that the signup screen should be shown
         statusMessageLiveData.setValue("NAVIGATE_TO_REGISTER");
     }
 
@@ -134,7 +129,6 @@ public class LoginViewModel extends AndroidViewModel {
         usernameValidLiveData.setValue(false);
         passwordValidLiveData.setValue(false);
         formValidLiveData.setValue(false);
-
         usernameErrorLiveData.setValue(null);
         passwordErrorLiveData.setValue(null);
     }

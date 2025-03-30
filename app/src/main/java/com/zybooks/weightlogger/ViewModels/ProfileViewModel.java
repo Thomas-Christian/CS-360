@@ -1,46 +1,38 @@
 package com.zybooks.weightlogger.ViewModels;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
 import com.zybooks.weightlogger.Data.UserRepository;
 import com.zybooks.weightlogger.Data.UserSessionManager;
-import com.zybooks.weightlogger.Utilities.InputValidator;
-import com.zybooks.weightlogger.Utilities.InputValidator.ValidationResult;
-
 import java.util.Locale;
 
 /**
  * ViewModel for profile operations with enhanced validation.
- * Handles user profile data, goal weight updates, and password changes.
+ * Extends BaseValidationViewModel to leverage centralized validation logic.
  */
-public class ProfileViewModel extends AndroidViewModel {
+public class ProfileViewModel extends BaseValidationViewModel {
     private final UserRepository userRepository;
     private final UserSessionManager sessionManager;
-    private final MutableLiveData<String> statusMessageLiveData = new MutableLiveData<>();
+
+    // UI state data
     private final MutableLiveData<String> usernameLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> goalWeightTextLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> logoutLiveData = new MutableLiveData<>();
 
-    // Field validation for goal weight
+    // Goal weight validation
     private final MutableLiveData<Boolean> goalWeightValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<String> goalWeightErrorLiveData = new MutableLiveData<>();
 
-    // Field validation for password change
+    // Password change validation
     private final MutableLiveData<Boolean> currentPasswordValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> newPasswordValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> confirmPasswordValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> passwordFormValidLiveData = new MutableLiveData<>(false);
-
     private final MutableLiveData<String> currentPasswordErrorLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> newPasswordErrorLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> confirmPasswordErrorLiveData = new MutableLiveData<>();
-
-    // Password strength
     private final MutableLiveData<Integer> passwordStrengthLiveData = new MutableLiveData<>(0);
 
     public ProfileViewModel(@NonNull Application application) {
@@ -60,19 +52,12 @@ public class ProfileViewModel extends AndroidViewModel {
     public LiveData<String> getUsernameLiveData() { return usernameLiveData; }
     public LiveData<String> getGoalWeightTextLiveData() { return goalWeightTextLiveData; }
     public LiveData<Boolean> getLogoutLiveData() { return logoutLiveData; }
-
     public LiveData<Boolean> getGoalWeightValidLiveData() { return goalWeightValidLiveData; }
     public LiveData<String> getGoalWeightErrorLiveData() { return goalWeightErrorLiveData; }
-
-//    public LiveData<Boolean> getCurrentPasswordValidLiveData() { return currentPasswordValidLiveData; }
-//    public LiveData<Boolean> getNewPasswordValidLiveData() { return newPasswordValidLiveData; }
-//    public LiveData<Boolean> getConfirmPasswordValidLiveData() { return confirmPasswordValidLiveData; }
     public LiveData<Boolean> getPasswordFormValidLiveData() { return passwordFormValidLiveData; }
-
     public LiveData<String> getCurrentPasswordErrorLiveData() { return currentPasswordErrorLiveData; }
     public LiveData<String> getNewPasswordErrorLiveData() { return newPasswordErrorLiveData; }
     public LiveData<String> getConfirmPasswordErrorLiveData() { return confirmPasswordErrorLiveData; }
-
     public LiveData<Integer> getPasswordStrengthLiveData() { return passwordStrengthLiveData; }
 
     /**
@@ -95,14 +80,16 @@ public class ProfileViewModel extends AndroidViewModel {
     }
 
     /**
-     * Validates goal weight input.
+     * Validates goal weight input using the ValidationService.
      *
      * @param goalWeightStr The goal weight as a string
      */
     public void validateGoalWeight(String goalWeightStr) {
-        ValidationResult result = InputValidator.validateWeight(goalWeightStr);
-        goalWeightValidLiveData.setValue(result.isValid());
-        goalWeightErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validateWeight(
+                goalWeightStr,
+                goalWeightValidLiveData,
+                goalWeightErrorLiveData
+        );
     }
 
     /**
@@ -139,27 +126,34 @@ public class ProfileViewModel extends AndroidViewModel {
     }
 
     /**
-     * Validates current password input.
+     * Validates current password input using the ValidationService.
      *
      * @param currentPassword The current password
      */
     public void validateCurrentPassword(String currentPassword) {
-        ValidationResult result = InputValidator.validateRequired(currentPassword, "Current password");
-        currentPasswordValidLiveData.setValue(result.isValid());
-        currentPasswordErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        // For current password, we only need to check it's not empty
+        if (currentPassword.isEmpty()) {
+            currentPasswordValidLiveData.setValue(false);
+            currentPasswordErrorLiveData.setValue("Current password is required");
+        } else {
+            currentPasswordValidLiveData.setValue(true);
+            currentPasswordErrorLiveData.setValue(null);
+        }
         updatePasswordFormValidity();
     }
 
     /**
-     * Validates new password input with strength calculation.
+     * Validates new password input with strength calculation using the ValidationService.
      *
      * @param newPassword The new password
      */
     public void validateNewPassword(String newPassword) {
-        ValidationResult result = InputValidator.validatePassword(newPassword);
-        newPasswordValidLiveData.setValue(result.isValid());
-        newPasswordErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
-        passwordStrengthLiveData.setValue(InputValidator.calculatePasswordStrength(newPassword));
+        validationService.validatePassword(
+                newPassword,
+                newPasswordValidLiveData,
+                newPasswordErrorLiveData,
+                passwordStrengthLiveData
+        );
         updatePasswordFormValidity();
     }
 
@@ -170,9 +164,12 @@ public class ProfileViewModel extends AndroidViewModel {
      * @param confirmPassword The confirmation of the new password
      */
     public void validateConfirmPassword(String newPassword, String confirmPassword) {
-        ValidationResult result = InputValidator.validatePasswordMatch(newPassword, confirmPassword);
-        confirmPasswordValidLiveData.setValue(result.isValid());
-        confirmPasswordErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validatePasswordMatch(
+                newPassword,
+                confirmPassword,
+                confirmPasswordValidLiveData,
+                confirmPasswordErrorLiveData
+        );
         updatePasswordFormValidity();
     }
 
@@ -180,15 +177,12 @@ public class ProfileViewModel extends AndroidViewModel {
      * Updates the password form validity state based on individual field validities.
      */
     private void updatePasswordFormValidity() {
-        Boolean currentPasswordValid = currentPasswordValidLiveData.getValue();
-        Boolean newPasswordValid = newPasswordValidLiveData.getValue();
-        Boolean confirmPasswordValid = confirmPasswordValidLiveData.getValue();
-
-        boolean formValid = currentPasswordValid != null && currentPasswordValid &&
-                newPasswordValid != null && newPasswordValid &&
-                confirmPasswordValid != null && confirmPasswordValid;
-
-        passwordFormValidLiveData.setValue(formValid);
+        updateFormValidity(
+                passwordFormValidLiveData,
+                currentPasswordValidLiveData.getValue(),
+                newPasswordValidLiveData.getValue(),
+                confirmPasswordValidLiveData.getValue()
+        );
     }
 
     /**
@@ -217,7 +211,7 @@ public class ProfileViewModel extends AndroidViewModel {
         if (!userRepository.validateUser(username, currentPassword)) {
             currentPasswordErrorLiveData.setValue("Current password is incorrect");
             currentPasswordValidLiveData.setValue(false);
-            passwordFormValidLiveData.setValue(false);
+            updatePasswordFormValidity();
             statusMessageLiveData.setValue("Current password is incorrect");
             return;
         }
@@ -244,7 +238,7 @@ public class ProfileViewModel extends AndroidViewModel {
     /**
      * Gets the ID of the current user.
      *
-     * @return The user ID, or -1 if user not found
+     * @return The user ID, or Default if user not found
      */
     private int getUserId() {
         if (sessionManager.isLoggedIn()) {

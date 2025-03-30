@@ -7,6 +7,7 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.PointF;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -19,12 +20,13 @@ import com.zybooks.weightlogger.R;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 public class WeightChartView extends View {
+    private static final String TAG = "WeightChartView";
+
     private List<WeightDatabaseHelper.WeightEntry> entries = new ArrayList<>();
     private double goalWeight = 0;
     private boolean hasData = false;
@@ -39,7 +41,7 @@ public class WeightChartView extends View {
     private float minWeight = 0;
     private float maxWeight = 0;
     private final Path linePath = new Path();
-    private final List<PointF> points = new ArrayList<>();
+    private final List<PointF> pointsCache = new ArrayList<>();
     private final int paddingLeft = 80;
     private final int paddingRight = 40;
     private final int paddingTop = 40;
@@ -108,7 +110,7 @@ public class WeightChartView extends View {
                     return date1.compareTo(date2);
                 }
             } catch (ParseException e) {
-                e.printStackTrace();
+                Log.e(TAG, "Error parsing date", e);
             }
             return 0;
         });
@@ -139,7 +141,50 @@ public class WeightChartView extends View {
             maxWeight = maxWeight + range * 0.1f;
         }
 
+        // Precalculate the points before drawing
+        calculatePoints();
         invalidate();
+    }
+
+    private void calculatePoints() {
+        // Clear cached points
+        pointsCache.clear();
+
+        if (!hasData || entries.isEmpty()) {
+            return;
+        }
+
+        int width = getWidth();
+        int height = getHeight();
+
+        // Handle the case when the view size isn't set yet
+        if (width <= 0 || height <= 0) {
+            return;
+        }
+
+        int chartWidth = width - paddingLeft - paddingRight;
+        int chartHeight = height - paddingTop - paddingBottom;
+        float weightRange = maxWeight - minWeight;
+
+        // Calculate points for line
+        for (int i = 0; i < entries.size(); i++) {
+            WeightDatabaseHelper.WeightEntry entry = entries.get(i);
+            float x = paddingLeft + ((float) (chartWidth * i) / (entries.size() - 1));
+            if (entries.size() == 1) {
+                x = paddingLeft + chartWidth / 2f;
+            }
+
+            float normalizedWeight = (float) ((entry.getWeight() - minWeight) / weightRange);
+            float y = height - paddingBottom - (normalizedWeight * chartHeight);
+
+            pointsCache.add(new PointF(x, y));
+        }
+    }
+
+    @Override
+    protected void onSizeChanged(int w, int h, int old_width, int old_height) {
+        super.onSizeChanged(w, h, old_width, old_height);
+        calculatePoints();
     }
 
     @Override
@@ -155,12 +200,7 @@ public class WeightChartView extends View {
 
         int width = getWidth();
         int height = getHeight();
-        int chartWidth = width - paddingLeft - paddingRight;
         int chartHeight = height - paddingTop - paddingBottom;
-
-        // Clear previous points
-        points.clear();
-        linePath.reset();
 
         // Draw axes
         canvas.drawLine(paddingLeft, height - paddingBottom, width - paddingRight, height - paddingBottom, gridPaint); // X-axis
@@ -178,31 +218,23 @@ public class WeightChartView extends View {
             canvas.drawText(String.format(Locale.US, "%.1f", labelValue), paddingLeft - 10, y + axisLabelPaint.getTextSize() / 3, axisLabelPaint);
         }
 
-        // Calculate points for line
-        for (int i = 0; i < entries.size(); i++) {
-            WeightDatabaseHelper.WeightEntry entry = entries.get(i);
-            float x = paddingLeft + ((float) (chartWidth * i) / (entries.size() - 1));
-            if (entries.size() == 1) {
-                x = paddingLeft + chartWidth / 2f;
-            }
-
-            float normalizedWeight = (float) ((entry.getWeight() - minWeight) / weightRange);
-            float y = height - paddingBottom - (normalizedWeight * chartHeight);
-
-            points.add(new PointF(x, y));
-
+        // Draw the weight data path
+        linePath.reset();
+        for (int i = 0; i < pointsCache.size(); i++) {
+            PointF point = pointsCache.get(i);
             if (i == 0) {
-                linePath.moveTo(x, y);
+                linePath.moveTo(point.x, point.y);
             } else {
-                linePath.lineTo(x, y);
+                linePath.lineTo(point.x, point.y);
             }
 
             // Draw point
-            canvas.drawCircle(x, y, 8, pointPaint);
+            canvas.drawCircle(point.x, point.y, 8, pointPaint);
 
             // Draw weight value
             textPaint.setTextAlign(Paint.Align.CENTER);
-            canvas.drawText(String.format(Locale.US, "%.1f", entry.getWeight()), x, y - 15, textPaint);
+            WeightDatabaseHelper.WeightEntry entry = entries.get(i);
+            canvas.drawText(String.format(Locale.US, "%.1f", entry.getWeight()), point.x, point.y - 15, textPaint);
 
             // Draw X-axis label (date)
             if (i == 0 || i == entries.size() - 1 || entries.size() <= 5 || i % (entries.size() / 5) == 0) {
@@ -210,9 +242,9 @@ public class WeightChartView extends View {
                     Date date = inputFormat.parse(entry.getDate());
                     String formattedDate = date != null ? outputFormat.format(date) : entry.getDate();
                     axisLabelPaint.setTextAlign(Paint.Align.CENTER);
-                    canvas.drawText(formattedDate, x, height - paddingBottom + 30, axisLabelPaint);
+                    canvas.drawText(formattedDate, point.x, height - paddingBottom + 30, axisLabelPaint);
                 } catch (ParseException e) {
-                    e.printStackTrace();
+                    Log.e(TAG, "Error parsing date for label", e);
                 }
             }
         }

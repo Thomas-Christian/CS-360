@@ -123,7 +123,7 @@ public class WeightDataFragment extends Fragment {
         weightRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         // Initialize adapter with empty list
-        adapter = new WeightAdapter(getContext(), new ArrayList<>(), viewModel);
+        adapter = new WeightAdapter(getContext(), new ArrayList<>());
         weightRecyclerView.setAdapter(adapter);
 
         // Set up adapter click listeners
@@ -291,9 +291,6 @@ public class WeightDataFragment extends Fragment {
     private void updateProgressIndicator(double currentWeight, double goalWeight) {
         // Determine if goal is to lose or gain weight
         boolean isWeightLoss = currentWeight > goalWeight;
-
-        // Calculate progress percentage
-        double difference = Math.abs(currentWeight - goalWeight);
         double progressValue;
 
         double startWeight = getStartWeight();
@@ -307,8 +304,14 @@ public class WeightDataFragment extends Fragment {
             }
 
             double totalToLose = startWeight - goalWeight;
-            double lost = startWeight - currentWeight;
-            progressValue = (lost / totalToLose) * 100;
+
+            // Prevent division by zero or tiny values
+            if (totalToLose < 0.01) {
+                progressValue = 0;
+            } else {
+                double lost = startWeight - currentWeight;
+                progressValue = (lost / totalToLose) * 100;
+            }
         } else {
             // For weight gain goal
             if (startWeight >= goalWeight) {
@@ -318,8 +321,14 @@ public class WeightDataFragment extends Fragment {
             }
 
             double totalToGain = goalWeight - startWeight;
-            double gained = currentWeight - startWeight;
-            progressValue = (gained / totalToGain) * 100;
+
+            // Prevent division by zero or tiny values
+            if (totalToGain < 0.01) {
+                progressValue = currentWeight >= goalWeight ? 100 : 0;
+            } else {
+                double gained = currentWeight - startWeight;
+                progressValue = (gained / totalToGain) * 100;
+            }
         }
 
         // Cap progress at 100%

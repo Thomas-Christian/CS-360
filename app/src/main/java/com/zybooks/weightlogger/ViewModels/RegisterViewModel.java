@@ -1,37 +1,33 @@
 package com.zybooks.weightlogger.ViewModels;
 
 import android.app.Application;
-
 import androidx.annotation.NonNull;
-import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-
 import com.zybooks.weightlogger.Data.UserRepository;
 import com.zybooks.weightlogger.Data.UserSessionManager;
-import com.zybooks.weightlogger.Utilities.InputValidator;
-import com.zybooks.weightlogger.Utilities.InputValidator.ValidationResult;
 
 /**
  * ViewModel for user registration with enhanced validation.
- * Handles new user creation with real-time input validation.
+ * Extends BaseValidationViewModel to leverage centralized validation logic.
  */
-public class RegisterViewModel extends AndroidViewModel {
+public class RegisterViewModel extends BaseValidationViewModel {
     private final UserRepository userRepository;
     private final UserSessionManager sessionManager;
-    private final MutableLiveData<String> statusMessageLiveData = new MutableLiveData<>();
-    private final MutableLiveData<Integer> passwordStrengthLiveData = new MutableLiveData<>();
+
+    // Status indicators
+    private final MutableLiveData<Integer> passwordStrengthLiveData = new MutableLiveData<>(0);
     private final MutableLiveData<Boolean> registrationSuccessLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> loginSuccessLiveData = new MutableLiveData<>();
 
-    // Field validity tracking
+    // Validation states
     private final MutableLiveData<Boolean> usernameValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> passwordValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> confirmPasswordValidLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Boolean> goalWeightValidLiveData = new MutableLiveData<>(true); // Optional field
     private final MutableLiveData<Boolean> formValidLiveData = new MutableLiveData<>(false);
 
-    // Field error messages
+    // Error messages
     private final MutableLiveData<String> usernameErrorLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> passwordErrorLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> confirmPasswordErrorLiveData = new MutableLiveData<>();
@@ -47,13 +43,7 @@ public class RegisterViewModel extends AndroidViewModel {
     public LiveData<String> getStatusMessageLiveData() { return statusMessageLiveData; }
     public LiveData<Integer> getPasswordStrengthLiveData() { return passwordStrengthLiveData; }
     public LiveData<Boolean> getRegistrationSuccessLiveData() { return registrationSuccessLiveData; }
-
-//    public LiveData<Boolean> getUsernameValidLiveData() { return usernameValidLiveData; }
-//    public LiveData<Boolean> getPasswordValidLiveData() { return passwordValidLiveData; }
-//    public LiveData<Boolean> getConfirmPasswordValidLiveData() { return confirmPasswordValidLiveData; }
-//    public LiveData<Boolean> getGoalWeightValidLiveData() { return goalWeightValidLiveData; }
     public LiveData<Boolean> getFormValidLiveData() { return formValidLiveData; }
-
     public LiveData<String> getUsernameErrorLiveData() { return usernameErrorLiveData; }
     public LiveData<String> getPasswordErrorLiveData() { return passwordErrorLiveData; }
     public LiveData<String> getConfirmPasswordErrorLiveData() { return confirmPasswordErrorLiveData; }
@@ -61,14 +51,15 @@ public class RegisterViewModel extends AndroidViewModel {
 
     /**
      * Validates username in real-time.
-     * Updates usernameValidLiveData and usernameErrorLiveData based on validation results.
      *
      * @param username The username to validate
      */
     public void validateUsername(String username) {
-        ValidationResult result = InputValidator.validateUsername(username);
-        usernameValidLiveData.setValue(result.isValid());
-        usernameErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validateUsername(
+                username,
+                usernameValidLiveData,
+                usernameErrorLiveData
+        );
         updateFormValidity();
     }
 
@@ -78,10 +69,12 @@ public class RegisterViewModel extends AndroidViewModel {
      * @param password The password to validate
      */
     public void validatePassword(String password) {
-        ValidationResult result = InputValidator.validatePassword(password);
-        passwordValidLiveData.setValue(result.isValid());
-        passwordErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
-        passwordStrengthLiveData.setValue(InputValidator.calculatePasswordStrength(password));
+        validationService.validatePassword(
+                password,
+                passwordValidLiveData,
+                passwordErrorLiveData,
+                passwordStrengthLiveData
+        );
         updateFormValidity();
     }
 
@@ -92,9 +85,12 @@ public class RegisterViewModel extends AndroidViewModel {
      * @param confirmPassword The confirmation password
      */
     public void validateConfirmPassword(String password, String confirmPassword) {
-        ValidationResult result = InputValidator.validatePasswordMatch(password, confirmPassword);
-        confirmPasswordValidLiveData.setValue(result.isValid());
-        confirmPasswordErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validatePasswordMatch(
+                password,
+                confirmPassword,
+                confirmPasswordValidLiveData,
+                confirmPasswordErrorLiveData
+        );
         updateFormValidity();
     }
 
@@ -113,9 +109,11 @@ public class RegisterViewModel extends AndroidViewModel {
             return;
         }
 
-        ValidationResult result = InputValidator.validateWeight(goalWeightStr);
-        goalWeightValidLiveData.setValue(result.isValid());
-        goalWeightErrorLiveData.setValue(result.isValid() ? null : result.getErrorMessage());
+        validationService.validateWeight(
+                goalWeightStr,
+                goalWeightValidLiveData,
+                goalWeightErrorLiveData
+        );
         updateFormValidity();
     }
 
@@ -123,46 +121,13 @@ public class RegisterViewModel extends AndroidViewModel {
      * Updates the overall form validity based on individual field validities.
      */
     private void updateFormValidity() {
-        Boolean usernameValid = usernameValidLiveData.getValue();
-        Boolean passwordValid = passwordValidLiveData.getValue();
-        Boolean confirmPasswordValid = confirmPasswordValidLiveData.getValue();
-        Boolean goalWeightValid = goalWeightValidLiveData.getValue();
-
-        boolean formValid = usernameValid != null && usernameValid &&
-                passwordValid != null && passwordValid &&
-                confirmPasswordValid != null && confirmPasswordValid &&
-                goalWeightValid != null && goalWeightValid;
-
-        formValidLiveData.setValue(formValid);
-    }
-
-    /**
-     * Attempts to log in a user with the provided credentials.
-     * Performs validation before attempting authentication.
-     *
-     * @param username The username for authentication
-     * @param password The password for authentication
-     */
-    public void loginUser(String username, String password) {
-        // Validate inputs
-        validateUsername(username);
-        validatePassword(password);
-
-        // Check form validity
-        if (Boolean.FALSE.equals(formValidLiveData.getValue())) {
-            statusMessageLiveData.setValue("Please enter both username and password.");
-            return;
-        }
-
-        // Attempt authentication
-        if (userRepository.validateUser(username, password)) {
-            sessionManager.saveLoginSession(username);
-            statusMessageLiveData.setValue("Login successful!");
-            loginSuccessLiveData.setValue(true);
-        } else {
-            statusMessageLiveData.setValue("Invalid username or password.");
-            loginSuccessLiveData.setValue(false);
-        }
+        super.updateFormValidity(
+                formValidLiveData,
+                usernameValidLiveData.getValue(),
+                passwordValidLiveData.getValue(),
+                confirmPasswordValidLiveData.getValue(),
+                goalWeightValidLiveData.getValue()
+        );
     }
 
     /**
@@ -190,7 +155,7 @@ public class RegisterViewModel extends AndroidViewModel {
         if (userRepository.userExists(username)) {
             usernameErrorLiveData.setValue("This username is already taken.");
             usernameValidLiveData.setValue(false);
-            formValidLiveData.setValue(false);
+            updateFormValidity();
             statusMessageLiveData.setValue("Username already exists. Please choose another.");
             return;
         }
@@ -201,10 +166,9 @@ public class RegisterViewModel extends AndroidViewModel {
             try {
                 goalWeight = Double.parseDouble(goalWeightStr);
             } catch (NumberFormatException e) {
-                // This shouldn't happen due to prior validation
                 goalWeightErrorLiveData.setValue("Invalid weight format.");
                 goalWeightValidLiveData.setValue(false);
-                formValidLiveData.setValue(false);
+                updateFormValidity();
                 return;
             }
         }
@@ -214,14 +178,20 @@ public class RegisterViewModel extends AndroidViewModel {
         if (success) {
             statusMessageLiveData.setValue("Registration successful! You can now log in.");
             registrationSuccessLiveData.setValue(true);
-            try {
-                loginUser(username, password);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
+            loginUser(username, password);
         } else {
             statusMessageLiveData.setValue("Registration failed. Please try again later.");
             registrationSuccessLiveData.setValue(false);
+        }
+    }
+
+    /**
+     * Attempts to log in the newly registered user.
+     */
+    private void loginUser(String username, String password) {
+        if (userRepository.validateUser(username, password)) {
+            sessionManager.saveLoginSession(username);
+            loginSuccessLiveData.setValue(true);
         }
     }
 

@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.zybooks.weightlogger.Data.WeightDatabaseHelper;
 import com.zybooks.weightlogger.R;
-import com.zybooks.weightlogger.ViewModels.WeightDataViewModel;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +29,7 @@ public class WeightAdapter extends RecyclerView.Adapter<WeightAdapter.ViewHolder
 
     private OnWeightEntryActionListener listener;
 
-    public WeightAdapter(Context context, List<WeightDatabaseHelper.WeightEntry> weightEntries, WeightDataViewModel viewModel) {
+    public WeightAdapter(Context context, List<WeightDatabaseHelper.WeightEntry> weightEntries) {
         this.context = context;
         this.weightEntries = weightEntries;
     }

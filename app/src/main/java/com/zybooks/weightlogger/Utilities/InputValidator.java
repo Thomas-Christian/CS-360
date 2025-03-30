@@ -342,27 +342,6 @@ public class InputValidator {
     }
 
     /**
-     * Validates input text against a maximum length.
-     * Useful for validating text inputs with character limits.
-     *
-     * @param text The text to validate
-     * @param maxLength The maximum allowed length
-     * @param fieldName The name of the field (for error message)
-     * @return A ValidationResult object with the validation status and any error message
-     */
-    public static ValidationResult validateMaxLength(String text, int maxLength, String fieldName) {
-        if (text == null) {
-            return new ValidationResult(false, fieldName + " cannot be null");
-        }
-
-        if (text.length() > maxLength) {
-            return new ValidationResult(false, fieldName + " cannot exceed " + maxLength + " characters");
-        }
-
-        return new ValidationResult(true, "");
-    }
-
-    /**
      * Validates that a required field is not empty.
      *
      * @param text The text to validate
@@ -377,55 +356,4 @@ public class InputValidator {
         return new ValidationResult(true, "");
     }
 
-    /**
-     * Validates text against a regular expression pattern.
-     * Useful for custom validation requirements.
-     *
-     * @param text The text to validate
-     * @param pattern The regex pattern to match against
-     * @param errorMessage The error message if validation fails
-     * @return A ValidationResult object with the validation status and any error message
-     */
-    public static ValidationResult validatePattern(String text, Pattern pattern, String errorMessage) {
-        if (text == null) {
-            return new ValidationResult(false, "Input cannot be null");
-        }
-
-        if (!pattern.matcher(text).matches()) {
-            return new ValidationResult(false, errorMessage);
-        }
-
-        return new ValidationResult(true, "");
-    }
-
-    /**
-     * Validates a numeric value within a specified range.
-     *
-     * @param valueStr The numeric value as a string
-     * @param min The minimum allowed value
-     * @param max The maximum allowed value
-     * @param fieldName The name of the field (for error message)
-     * @return A ValidationResult object with the validation status and any error message
-     */
-    public static ValidationResult validateNumericRange(String valueStr, double min, double max, String fieldName) {
-        if (valueStr == null || valueStr.trim().isEmpty()) {
-            return new ValidationResult(false, fieldName + " cannot be empty");
-        }
-
-        try {
-            double value = Double.parseDouble(valueStr.trim());
-
-            if (value < min) {
-                return new ValidationResult(false, fieldName + " must be at least " + min);
-            }
-
-            if (value > max) {
-                return new ValidationResult(false, fieldName + " cannot exceed " + max);
-            }
-
-            return new ValidationResult(true, "");
-        } catch (NumberFormatException e) {
-            return new ValidationResult(false, fieldName + " must be a valid number");
-        }
-    }
 }
