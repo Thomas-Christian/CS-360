@@ -1,14 +1,74 @@
 <resources>
-    <string name="app_name">Weight Logger</string>
-    <!-- Strings related to login -->
-    <string name="prompt_email">Email</string>
-    <string name="prompt_password">Password</string>
-    <string name="action_sign_in">Sign in or register</string>
-    <string name="action_sign_in_short">Sign in</string>
-    <string name="welcome">"Welcome!"</string>
-    <string name="invalid_username">Not a valid username</string>
-    <string name="invalid_password">Password must be >5 characters</string>
-    <string name="login_failed">"Login failed"</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="app_name">Weight Tracker</string>
+    <string name="app_tagline">Track your progress, achieve your goals</string>
+
+    <!-- Navigation -->
+    <string name="login">Login</string>
+    <string name="weight_tracker">Weight Tracker</string>
+    <string name="profile">Profile</string>
+    <string name="back">Go Back</string>
+
+    <!-- Login & Register -->
+    <string name="welcome_message">Welcome Back!</string>
+    <string name="username_hint">Username</string>
+    <string name="password_hint">Password</string>
+    <string name="username_placeholder">Username: %s</string>
+    <string name="username">Username: %s</string>
+    <string name="create_account">Create Account</string>
+    <string name="confirm_password_hint">Confirm Password</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="password_strength">Password Strength:</string>
+    <string name="weak">Weak</string>
+    <string name="medium">Medium</string>
+    <string name="strong">Strong</string>
+    <string name="very_strong">Very Strong</string>
+    <string name="password_helper_text">Use at least 8 characters with letters and numbers</string>
+
+    <!-- Profile -->
+    <string name="goal_weight_placeholder">Goal Weight: %s</string>
+    <string name="goal_weight_hint">Goal Weight</string>
+    <string name="edit_goal">Edit Goal</string>
+    <string name="change_password">Change Password</string>
+    <string name="current_password_hint">Current Password</string>
+    <string name="new_password_hint">New Password</string>
+    <string name="confirm_new_password_hint">Confirm New Password</string>
+    <string name="logout">Logout</string>
+    <string name="account_settings">Account Settings</string>
+    <string name="your_statistics">Your Statistics</string>
+    <string name="total_entries">Total Entries</string>
+    <string name="weight_lost">Weight Lost</string>
+    <string name="days_tracking">Days Tracking</string>
+    <string name="weekly_avg">Weekly Average</string>
+
+    <!-- Weight Data -->
+    <string name="track_your_progress">Track your progress over time</string>
+    <string name="your_progress">Your Progress</string>
+    <string name="current_weight">Current Weight</string>
+    <string name="goal_weight">Goal Weight</string>
+    <string name="add_weight_entry">Add Weight Entry</string>
+    <string name="date_hint">Date</string>
+    <string name="weight_hint">Weight</string>
+    <string name="add_entry">Add Entry</string>
+    <string name="weight_history">Weight History</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    <string name="cancel">Cancel</string>
+    <string name="view_chart">View Chart</string>
+    <string name="confirm_delete">Confirm Delete</string>
+    <string name="confirm_delete_message">Are you sure you want to delete this weight entry?</string>
+    <string name="edit_weight_entry">Edit Weight Entry</string>
+
+    <!-- Charts -->
+    <string name="weight_progress">Weight Progress</string>
+    <string name="week">Week</string>
+    <string name="month">Month</string>
+    <string name="three_months">3 Months</string>
+    <string name="year">Year</string>
+    <string name="all_time">All Time</string>
+    <string name="app_logo">App Logo</string>
+    <string name="set_a_goal_weight">Set a goal weight in your profile</string>
+    <string name="goal_achieved">Goal achieved!</string>
+    <string name="no_data">No data</string>
+    <string name="goal_weight_not_set">Not set</string>
 </resources>

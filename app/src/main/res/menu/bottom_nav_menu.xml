@@ -3,18 +3,18 @@
 
     <item
         android:id="@+id/navigation_login"
-        android:title="Login"
-        android:icon="@drawable/baseline_add_circle_24"/>
+        android:title="@string/login"
+        android:icon="@drawable/login_24"/>
 
     <item
         android:id="@+id/navigation_weight_data"
-        android:title="Weight Log"
-        android:icon="@drawable/baseline_addchart_24"/>
+        android:title="@string/weight_tracker"
+        android:icon="@drawable/weight_scale_24"/>
 
     <item
         android:id="@+id/navigation_profile"
-        android:icon="@drawable/baseline_account_box_24"
-        android:title="Profile"
+        android:icon="@drawable/person_24"
+        android:title="@string/profile"
         android:visible="false" />
-    
+
 </menu>

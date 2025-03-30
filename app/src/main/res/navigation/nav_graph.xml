@@ -7,20 +7,30 @@
 
     <fragment
         android:id="@+id/navigation_login"
-        android:name="com.zybooks.weightlogger.LoginFragment"
+        android:name="com.zybooks.weightlogger.Fragments.LoginFragment"
         android:label="Login"
         tools:layout="@layout/fragment_login" />
 
     <fragment
         android:id="@+id/navigation_weight_data"
-        android:name="com.zybooks.weightlogger.WeightDataFragment"
+        android:name="com.zybooks.weightlogger.Fragments.WeightDataFragment"
         android:label="Weight Log"
         tools:layout="@layout/fragment_weight_data" />
 
     <fragment
         android:id="@+id/navigation_profile"
-        android:name="com.zybooks.weightlogger.ProfileFragment"
+        android:name="com.zybooks.weightlogger.Fragments.ProfileFragment"
         android:label="Profile"
         tools:layout="@layout/fragment_profile" />
+
+    <fragment
+        android:id="@+id/navigation_register"
+        android:name="com.zybooks.weightlogger.Fragments.RegisterFragment"
+        android:label="Register"
+        tools:layout="@layout/fragment_register">
+        <action
+            android:id="@+id/action_registerFragment_to_loginFragment"
+            app:destination="@id/navigation_login" />
+    </fragment>
 
 </navigation>

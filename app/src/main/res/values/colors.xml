@@ -1,5 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
+    <!-- Primary colors -->
+    <color name="teal_50">#E0F2F1</color>
+    <color name="teal_100">#B2DFDB</color>
+    <color name="teal_200">#80CBC4</color>
+    <color name="teal_500">#009688</color>
+    <color name="teal_700">#00796B</color>
+
+    <!-- Secondary colors -->
+    <color name="amber_100">#FFECB3</color>
+    <color name="amber_200">#FFE082</color>
+    <color name="amber_500">#FFC107</color>
+    <color name="amber_700">#FFA000</color>
+
+    <!-- Neutrals -->
+    <color name="grey_50">#FAFAFA</color>
+    <color name="grey_100">#F5F5F5</color>
+    <color name="grey_200">#EEEEEE</color>
+    <color name="grey_300">#E0E0E0</color>
+    <color name="grey_700">#616161</color>
+    <color name="grey_900">#212121</color>
+
+    <!-- System -->
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+
+    <!-- Feedback -->
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+
+    <!-- Text -->
+    <color name="text_primary_light">#DE000000</color> <!-- 87% opacity -->
+    <color name="text_secondary_light">#99000000</color> <!-- 60% opacity -->
+    <color name="text_disabled_light">#61000000</color> <!-- 38% opacity -->
+    <color name="text_primary_dark">#DEFFFFFF</color> <!-- 87% opacity -->
+    <color name="text_secondary_dark">#99FFFFFF</color> <!-- 60% opacity -->
+    <color name="text_disabled_dark">#61FFFFFF</color> <!-- 38% opacity -->
+
+    <!-- Surface variations -->
+    <color name="surface_light">#FFFFFF</color>
+    <color name="surface_dark">#121212</color>
+    <color name="surface_variant_light">#F7F7F7</color>
+    <color name="surface_variant_dark">#292929</color>
+
+    <!-- Navigation -->
+    <color name="nav_selected">@color/teal_500</color>
+    <color name="nav_unselected">@color/grey_700</color>
 </resources>

@@ -1,25 +1,40 @@
-package com.zybooks.weightlogger;
+package com.zybooks.weightlogger.Utilities;
 
 import android.Manifest;
+
 import android.content.pm.PackageManager;
-import android.os.Build;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for managing runtime permissions in the application.
+ * Handles permission requests, checks, and informing users when permissions are denied.
+ * Supports SMS and notifications permissions required by the app.
+ */
 public class Permissions {
     private static final int PERMISSIONS_REQUEST_CODE = 101;
     private static AppCompatActivity activity = null;
 
+    /**
+     * Creates a new Permissions instance.
+     *
+     * @param activity The activity context used for permission requests
+     */
     public Permissions(AppCompatActivity activity) {
         Permissions.activity = activity;
     }
 
+    /**
+     * Checks if the app has all required permissions and requests any missing permissions.
+     * Currently checks for SMS and notification permissions.
+     */
     public void checkPermissions() {
         List<String> permissionsNeeded = new ArrayList<>();
 
@@ -44,6 +59,14 @@ public class Permissions {
         }
     }
 
+    /**
+     * Handles the result of permission requests.
+     * Shows appropriate dialog messages for denied permissions.
+     *
+     * @param requestCode The request code passed when requesting the permissions
+     * @param permissions The requested permissions
+     * @param grantResults The grant results for the corresponding permissions
+     */
     public static void handlePermissionResult(int requestCode, String[] permissions, int[] grantResults) {
         if (requestCode == PERMISSIONS_REQUEST_CODE) {
             for (int i = 0; i < permissions.length; i++) {
@@ -59,6 +82,11 @@ public class Permissions {
         }
     }
 
+    /**
+     * Shows a dialog informing the user about the implications of denying a permission.
+     *
+     * @param message The message explaining what functionality will be limited
+     */
     private static void showPermissionDeniedDialog(String message) {
         new AlertDialog.Builder(activity)
                 .setTitle("Permission Denied")

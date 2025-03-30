@@ -4,50 +4,263 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:background="@color/surface_light"
+    tools:context=".Fragments.WeightDataFragment">
 
-    <GridView
-        android:id="@+id/weightGridView"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:horizontalSpacing="8dp"
-        android:numColumns="1"
-        android:stretchMode="columnWidth"
-        android:verticalSpacing="8dp"
-        app:layout_constraintBottom_toTopOf="@id/addWeightLayout"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="1.0"
-        tools:layout_editor_absoluteX="16dp" />
-
-    <LinearLayout
-        android:id="@+id/addWeightLayout"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintBottom_toBottomOf="parent">
+        android:layout_marginTop="32dp"
+        android:background="@android:color/transparent"
+        android:minHeight="?attr/actionBarSize"
+        android:paddingStart="16dp"
+        android:paddingTop="16dp"
+        android:paddingEnd="16dp"
+        android:paddingBottom="16dp"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <EditText
-            android:id="@+id/dateEditText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Date"
-            android:inputType="date" />
+            android:orientation="vertical"
+            android:gravity="center" >
 
-        <EditText
-            android:id="@+id/weightEditText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            <TextView
+                android:id="@+id/titleTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginTop="16dp"
+                android:text="@string/weight_tracker"
+                android:textAppearance="?attr/textAppearanceHeadline1"
+                android:textColor="@color/text_primary_light" />
+
+        </LinearLayout>
+
+    </androidx.appcompat.widget.Toolbar>
+
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/toolbar">
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Weight "
-            android:inputType="numberDecimal" />
+            android:orientation="vertical"
+            android:padding="16dp">
 
-        <Button
-            android:id="@+id/addWeightButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Add" />
+            <!-- Progress Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/progressCard"
+                style="@style/Widget.WeightTracker.CardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardElevation="2dp">
 
-    </LinearLayout>
+                <!-- Card content remains the same -->
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
 
+                    <TextView
+                        android:id="@+id/progressTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/your_progress"
+                        android:textAppearance="?attr/textAppearanceHeadline2"
+                        android:textColor="@color/text_primary_light"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/currentWeightLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/current_weight"
+                        android:textAppearance="?attr/textAppearanceBody2"
+                        android:textColor="@color/text_secondary_light"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/progressTitle" />
+
+                    <TextView
+                        android:id="@+id/currentWeightValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceHeadline2"
+                        android:textColor="@color/teal_700"
+                        app:layout_constraintStart_toStartOf="@id/currentWeightLabel"
+                        app:layout_constraintTop_toBottomOf="@id/currentWeightLabel"
+                        tools:text="175.5 lbs" />
+
+                    <TextView
+                        android:id="@+id/goalWeightLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/goal_weight"
+                        android:textAppearance="?attr/textAppearanceBody2"
+                        android:textColor="@color/text_secondary_light"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/progressTitle" />
+
+                    <TextView
+                        android:id="@+id/goalWeightValue"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textAppearance="?attr/textAppearanceHeadline2"
+                        android:textColor="@color/amber_700"
+                        app:layout_constraintEnd_toEndOf="@id/goalWeightLabel"
+                        app:layout_constraintTop_toBottomOf="@id/goalWeightLabel"
+                        tools:text="160.0 lbs" />
+
+                    <com.google.android.material.progressindicator.LinearProgressIndicator
+                        android:id="@+id/progressIndicator"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:progress="75"
+                        app:indicatorColor="@color/teal_500"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/currentWeightValue"
+                        app:trackColor="@color/grey_200"
+                        app:trackCornerRadius="4dp"
+                        app:trackThickness="8dp" />
+
+                    <TextView
+                        android:id="@+id/progressText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:textAppearance="?attr/textAppearanceBody2"
+                        android:textColor="@color/text_secondary_light"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/progressIndicator"
+                        tools:text="15.5 lbs to go!" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Add Weight Card and rest of the content remains the same -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/addWeightCard"
+                style="@style/Widget.WeightTracker.CardView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                app:cardElevation="2dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/addEntryLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/add_weight_entry"
+                        android:textAppearance="?attr/textAppearanceHeadline2"
+                        android:textColor="@color/text_primary_light"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/dateLayout"
+                        style="@style/Widget.WeightTracker.TextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginEnd="8dp"
+                        android:hint="@string/date_hint"
+                        app:errorEnabled="true"
+                        app:layout_constraintEnd_toStartOf="@+id/weightLayout"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/addEntryLabel"
+                        app:startIconDrawable="@drawable/calendar_24">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/dateEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="date"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:id="@+id/weightLayout"
+                        style="@style/Widget.WeightTracker.TextInputLayout"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:layout_marginTop="16dp"
+                        android:hint="@string/weight_hint"
+                        app:errorEnabled="true"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toEndOf="@+id/dateLayout"
+                        app:layout_constraintTop_toBottomOf="@+id/addEntryLabel"
+                        app:startIconDrawable="@drawable/weight_scale_24">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/weightEditText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="numberDecimal"
+                            android:maxLines="1" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/addWeightButton"
+                        style="@style/Widget.WeightTracker.Button"
+                        android:layout_width="300dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:enabled="false"
+                        android:text="@string/add_entry"
+                        app:icon="@drawable/add_24"
+                        app:iconGravity="textStart"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@+id/weightLayout" />
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:id="@+id/historyLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="8dp"
+                android:text="@string/weight_history"
+                android:textAppearance="?attr/textAppearanceHeadline2"
+                android:textColor="@color/text_primary_light" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/weightRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingBottom="80dp"
+                tools:listitem="@layout/weight_list_item" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
+        android:id="@+id/chartFab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:text="@string/view_chart"
+        android:textColor="@color/white"
+        app:icon="@drawable/chart_24"
+        app:iconTint="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

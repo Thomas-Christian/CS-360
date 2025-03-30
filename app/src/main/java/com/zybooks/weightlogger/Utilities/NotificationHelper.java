@@ -1,35 +1,54 @@
-package com.zybooks.weightlogger;
+package com.zybooks.weightlogger.Utilities;
 
 import android.Manifest;
+
 import android.annotation.SuppressLint;
+
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+
 import android.util.Log;
+import java.util.Random;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
-import java.util.Random;
+import com.zybooks.weightlogger.MainActivity;
 
+
+/**
+ * Helper class that manages the creation and sending of notifications related to weight goals.
+ * Handles notification channel setup and provides methods to send different types of
+ * motivational notifications based on user progress.
+ */
 public class NotificationHelper {
     private static final String CHANNEL_ID = "weight_goal_channel";
     private static final String CHANNEL_NAME = "Weight Goal Notifications";
     private static final String CHANNEL_DESC = "Notifications related to your weight goals";
     private static final String TAG = "NotificationHelper";
-
     private final Context context;
     private static final Random random = new Random();
 
+    /**
+     * Creates a new NotificationHelper instance and initializes the notification channel.
+     *
+     * @param context The context used to access system services and resources
+     */
     public NotificationHelper(Context context) {
         this.context = context;
         createNotificationChannel();
     }
 
+    /**
+     * Creates the notification channel for weight goal notifications.
+     * This is required for notifications on Android 8.0 (API level 26) and higher.
+     */
     private void createNotificationChannel() {
 
         NotificationChannel channel = new NotificationChannel(
@@ -45,6 +64,11 @@ public class NotificationHelper {
         }
     }
 
+    /**
+     * Checks if the app has permission to post notifications.
+     *
+     * @return true if notification permission is not granted, false otherwise
+     */
     private boolean hasNotificationPermission() {
 
         return ContextCompat.checkSelfPermission(context,
@@ -52,6 +76,13 @@ public class NotificationHelper {
 
     }
 
+    /**
+     * Sends a notification to inform the user about their progress toward their weight goal.
+     * Includes motivational messages based on how close they are to their goal.
+     *
+     * @param currentWeight The user's current weight
+     * @param goalWeight The user's goal weight
+     */
     public void sendGoalProgressNotification(double currentWeight, double goalWeight) {
         // Check permission before sending notification
         if (hasNotificationPermission()) {
@@ -99,6 +130,10 @@ public class NotificationHelper {
         }
     }
 
+    /**
+     * Sends a notification to congratulate the user on achieving their weight goal.
+     * Includes celebratory messages for this significant achievement.
+     */
     public void sendGoalAchievedNotification() {
         // Check permission before sending notification
         if (hasNotificationPermission()) {
@@ -113,7 +148,7 @@ public class NotificationHelper {
                 context, 0, intent,
                 PendingIntent.FLAG_IMMUTABLE);
 
-        String title = "WOW!";
+        String title = "Awesome Work!";
 
         // Choose a congratulatory message
         String[] messages = {
