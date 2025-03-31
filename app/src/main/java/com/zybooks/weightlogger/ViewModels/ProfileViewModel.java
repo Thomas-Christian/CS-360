@@ -6,6 +6,11 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.zybooks.weightlogger.Data.UserRepository;
 import com.zybooks.weightlogger.Data.UserSessionManager;
+import com.zybooks.weightlogger.Data.WeightDatabaseHelper;
+import com.zybooks.weightlogger.Data.WeightRepository;
+import com.zybooks.weightlogger.Utilities.UserStatisticsHelper;
+
+import java.util.List;
 import java.util.Locale;
 
 /**
@@ -15,11 +20,13 @@ import java.util.Locale;
 public class ProfileViewModel extends BaseValidationViewModel {
     private final UserRepository userRepository;
     private final UserSessionManager sessionManager;
+    private final UserStatisticsHelper statisticsHelper;
 
     // UI state data
     private final MutableLiveData<String> usernameLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> goalWeightTextLiveData = new MutableLiveData<>();
     private final MutableLiveData<Boolean> logoutLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> currentWeightTextLiveData = new MutableLiveData<>("--");
 
     // Goal weight validation
     private final MutableLiveData<Boolean> goalWeightValidLiveData = new MutableLiveData<>(false);
@@ -39,12 +46,16 @@ public class ProfileViewModel extends BaseValidationViewModel {
         super(application);
         userRepository = new UserRepository(application);
         sessionManager = new UserSessionManager(application);
+        statisticsHelper = new UserStatisticsHelper(application);
 
         // Initialize username
         usernameLiveData.setValue(sessionManager.getUsername());
 
         // Load initial goal weight
         updateWeightGoalInfo();
+
+        // Calculate statistics for the current user
+        calculateStatistics();
     }
 
     // LiveData getters
@@ -59,6 +70,24 @@ public class ProfileViewModel extends BaseValidationViewModel {
     public LiveData<String> getNewPasswordErrorLiveData() { return newPasswordErrorLiveData; }
     public LiveData<String> getConfirmPasswordErrorLiveData() { return confirmPasswordErrorLiveData; }
     public LiveData<Integer> getPasswordStrengthLiveData() { return passwordStrengthLiveData; }
+    public LiveData<String> getCurrentWeightTextLiveData() {return currentWeightTextLiveData; }
+
+    // Statistics LiveData getters
+    public LiveData<String> getTotalEntriesLiveData() {
+        return statisticsHelper.getTotalEntriesLiveData();
+    }
+
+    public LiveData<String> getWeightLostLiveData() {
+        return statisticsHelper.getWeightLostLiveData();
+    }
+
+    public LiveData<String> getDaysTrackingLiveData() {
+        return statisticsHelper.getDaysTrackingLiveData();
+    }
+
+    public LiveData<String> getWeeklyAvgLiveData() {
+        return statisticsHelper.getWeeklyAvgLiveData();
+    }
 
     /**
      * Updates the goal weight information displayed in the profile.
@@ -70,12 +99,38 @@ public class ProfileViewModel extends BaseValidationViewModel {
             return;
         }
 
+        // Update goal weight (existing code)
         double goalWeight = userRepository.getGoalWeight(userId);
         if (goalWeight <= 0) {
             goalWeightTextLiveData.setValue("Goal Weight: Not set");
         } else {
             goalWeightTextLiveData.setValue(String.format(Locale.getDefault(),
                     "%.1f lbs", goalWeight));
+        }
+
+        WeightRepository weightRepository = new WeightRepository(getApplication());
+        List<WeightDatabaseHelper.WeightEntry> entries = weightRepository.getWeightEntries(userId);
+
+        if (entries != null && !entries.isEmpty()) {
+            // Get the first entry (sorted in reverse chronological order)
+            double currentWeight = entries.get(0).getWeight();
+            currentWeightTextLiveData.setValue(String.format(Locale.getDefault(),
+                    "%.1f lbs", currentWeight));
+        } else {
+            currentWeightTextLiveData.setValue("No entries");
+        }
+
+        // Refresh statistics when goal weight is updated
+        calculateStatistics();
+    }
+
+    /**
+     * Calculates all user statistics.
+     */
+    private void calculateStatistics() {
+        int userId = getUserId();
+        if (userId != -1) {
+            statisticsHelper.calculateStatistics(userId);
         }
     }
 
@@ -240,7 +295,7 @@ public class ProfileViewModel extends BaseValidationViewModel {
      *
      * @return The user ID, or Default if user not found
      */
-    private int getUserId() {
+    public int getUserId() {
         if (sessionManager.isLoggedIn()) {
             String username = sessionManager.getUsername();
             return userRepository.getUserId(username);

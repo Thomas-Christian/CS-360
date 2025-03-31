@@ -341,19 +341,4 @@ public class InputValidator {
         return new ValidationResult(true, "");
     }
 
-    /**
-     * Validates that a required field is not empty.
-     *
-     * @param text The text to validate
-     * @param fieldName The name of the field (for error message)
-     * @return A ValidationResult object with the validation status and any error message
-     */
-    public static ValidationResult validateRequired(String text, String fieldName) {
-        if (text == null || text.trim().isEmpty()) {
-            return new ValidationResult(false, fieldName + " is required");
-        }
-
-        return new ValidationResult(true, "");
-    }
-
 }

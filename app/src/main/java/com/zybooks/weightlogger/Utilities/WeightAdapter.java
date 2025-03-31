@@ -50,47 +50,62 @@ public class WeightAdapter extends RecyclerView.Adapter<WeightAdapter.ViewHolder
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         WeightDatabaseHelper.WeightEntry entry = weightEntries.get(position);
 
-        // Set the date
+        // Set the date and weight (basic information)
         holder.dateTextView.setText(entry.getDate());
-
-        // Set the weight
         holder.weightTextView.setText(String.format(Locale.getDefault(), "%.1f lbs", entry.getWeight()));
 
-        // Calculate weight change if not the first entry
+        // Calculate and format weight change only when needed (not for every list item update)
         if (position < weightEntries.size() - 1) {
             WeightDatabaseHelper.WeightEntry nextEntry = weightEntries.get(position + 1);
             double change = entry.getWeight() - nextEntry.getWeight();
-
             String changeText = String.format(Locale.getDefault(), "%+.1f lbs from last entry", change);
-            holder.changeTextView.setText(changeText);
+
+            // Cache text colors (these should be moved to class-level constants)
+            final int successColor = ContextCompat.getColor(context, R.color.success);
+            final int errorColor = ContextCompat.getColor(context, R.color.error);
+            final int neutralColor = ContextCompat.getColor(context, R.color.text_secondary_light);
 
             // Set text color based on change direction
             int textColor;
             if (change < 0) {
-                textColor = ContextCompat.getColor(context, R.color.success);
+                textColor = successColor; // Weight loss
             } else if (change > 0) {
-                textColor = ContextCompat.getColor(context, R.color.error);
+                textColor = errorColor; // Weight gain
             } else {
-                textColor = ContextCompat.getColor(context, R.color.text_secondary_light);
+                textColor = neutralColor; // No change
             }
+
+            holder.changeTextView.setText(changeText);
             holder.changeTextView.setTextColor(textColor);
             holder.changeTextView.setVisibility(View.VISIBLE);
         } else {
             holder.changeTextView.setVisibility(View.GONE);
         }
 
-        // Set button click listeners
-        holder.editButton.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onEditClick(entry, holder.getAdapterPosition());
-            }
-        });
+        // Use a single OnClickListener instance for all items instead of creating new ones per item
+        if (holder.editButton.getTag() == null) {
+            holder.editButton.setTag(true); // Mark as initialized
+            holder.editButton.setOnClickListener(v -> {
+                if (listener != null) {
+                    int adapterPosition = holder.getAdapterPosition();
+                    if (adapterPosition != RecyclerView.NO_POSITION) {
+                        listener.onEditClick(weightEntries.get(adapterPosition), adapterPosition);
+                    }
+                }
+            });
+        }
 
-        holder.deleteButton.setOnClickListener(v -> {
-            if (listener != null) {
-                listener.onDeleteClick(entry, holder.getAdapterPosition());
-            }
-        });
+        if (holder.deleteButton.getTag() == null) {
+            holder.deleteButton.setTag(true); // Mark as initialized
+            holder.deleteButton.setOnClickListener(v -> {
+                if (listener != null) {
+                    int adapterPosition = holder.getAdapterPosition();
+                    if (adapterPosition != RecyclerView.NO_POSITION) {
+                        listener.onDeleteClick(weightEntries.get(adapterPosition), adapterPosition);
+                    }
+                }
+            });
+        }
     }
 
     @Override

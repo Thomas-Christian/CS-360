@@ -31,7 +31,12 @@ import com.zybooks.weightlogger.ViewModels.ProfileViewModel;
 public class ProfileFragment extends Fragment {
 
     private TextView usernameTextView;
+    private TextView currentWeightTextView;
     private TextView goalWeightTextView;
+    private TextView totalEntriesTextView;
+    private TextView weightLostTextView;
+    private TextView daysTrackingTextView;
+    private TextView weeklyAvgTextView;
     private ProfileViewModel viewModel;
 
     @Override
@@ -44,6 +49,14 @@ public class ProfileFragment extends Fragment {
         // Initialize views
         usernameTextView = view.findViewById(R.id.usernameTextView);
         goalWeightTextView = view.findViewById(R.id.goalWeightTextView);
+        currentWeightTextView = view.findViewById(R.id.currentWeightTextView);
+
+        // Initialize statistics views
+        totalEntriesTextView = view.findViewById(R.id.totalEntriesTextView);
+        weightLostTextView = view.findViewById(R.id.weightLostTextView);
+        daysTrackingTextView = view.findViewById(R.id.daysTrackingTextView);
+        weeklyAvgTextView = view.findViewById(R.id.weeklyAvgTextView);
+
         Button editGoalButton = view.findViewById(R.id.editGoalButton);
         Button logoutButton = view.findViewById(R.id.logoutButton);
         Button changePasswordButton = view.findViewById(R.id.changePasswordButton);
@@ -79,7 +92,15 @@ public class ProfileFragment extends Fragment {
         // Observe username
         viewModel.getUsernameLiveData().observe(getViewLifecycleOwner(), username -> {
             if (username != null) {
-                usernameTextView.setText(String.format("%s%s", getString(R.string.username), username));
+                // Use string resource with placeholder
+                usernameTextView.setText(getString(R.string.username, username));
+            }
+        });
+
+        // Observe current weight text
+        viewModel.getCurrentWeightTextLiveData().observe(getViewLifecycleOwner(), weightText -> {
+            if (currentWeightTextView != null && weightText != null) {
+                currentWeightTextView.setText(weightText);
             }
         });
 
@@ -93,7 +114,7 @@ public class ProfileFragment extends Fragment {
         // Observe status messages
         viewModel.getStatusMessageLiveData().observe(getViewLifecycleOwner(), message -> {
             if (message != null) {
-                Toast.makeText(getContext(), message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
             }
         });
 
@@ -104,6 +125,31 @@ public class ProfileFragment extends Fragment {
                     MainActivity activity = (MainActivity) getActivity();
                     activity.resetNavBarAfterLogout();
                 }
+            }
+        });
+
+        // Observe statistics
+        viewModel.getTotalEntriesLiveData().observe(getViewLifecycleOwner(), value -> {
+            if (totalEntriesTextView != null) {
+                totalEntriesTextView.setText(value);
+            }
+        });
+
+        viewModel.getWeightLostLiveData().observe(getViewLifecycleOwner(), value -> {
+            if (weightLostTextView != null) {
+                weightLostTextView.setText(value);
+            }
+        });
+
+        viewModel.getDaysTrackingLiveData().observe(getViewLifecycleOwner(), value -> {
+            if (daysTrackingTextView != null) {
+                daysTrackingTextView.setText(value);
+            }
+        });
+
+        viewModel.getWeeklyAvgLiveData().observe(getViewLifecycleOwner(), value -> {
+            if (weeklyAvgTextView != null) {
+                weeklyAvgTextView.setText(value);
             }
         });
     }
@@ -299,5 +345,12 @@ public class ProfileFragment extends Fragment {
 
         // Reset password validation when dialog is dismissed
         dialog.setOnDismissListener(dialog1 -> viewModel.resetPasswordValidation());
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        // Refresh data when returning to this fragment
+        viewModel.updateWeightGoalInfo();
     }
 }

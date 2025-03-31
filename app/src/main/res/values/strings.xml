@@ -36,7 +36,7 @@
     <string name="account_settings">Account Settings</string>
     <string name="your_statistics">Your Statistics</string>
     <string name="total_entries">Total Entries</string>
-    <string name="weight_lost">Weight Lost</string>
+    <string name="weight_change">Weight Change</string>
     <string name="days_tracking">Days Tracking</string>
     <string name="weekly_avg">Weekly Average</string>
 

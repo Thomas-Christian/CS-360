@@ -159,41 +159,38 @@ public class UserDatabaseHelper extends DatabaseHelper {
             db = this.getReadableDatabase();
             cursor = db.rawQuery("SELECT password FROM users WHERE username = ?", new String[]{username});
 
-            boolean valid = false;
-            if (cursor.moveToFirst()) {
-                String storedPassword = cursor.getString(0);
-
-                // Handle the default user with empty password
-                if (username.equals("DefaultUser") && storedPassword.isEmpty() && password.isEmpty()) {
-                    valid = true;
-                }
-                // Handle normal users with hashed passwords
-                else if (!storedPassword.isEmpty()) {
-                    if (storedPassword.contains(":")) {
-                        // It's a salted hash (new format)
-                        valid = PasswordHash.verifyPassword(password, storedPassword);
-                    } else {
-                        // It's a plain text password - convert it now
-                        valid = password.equals(storedPassword);
-                        if (valid) {
-                            // Update to salted hash format for next login
-                            updatePassword(username, password);
-                        }
-                    }
-                }
+            // Check if user exists first (most common case)
+            if (!cursor.moveToFirst()) {
+                return false;
             }
-            return valid;
+
+            String storedPassword = cursor.getString(0);
+
+            // Handle the default user with empty password (rare case)
+            if (username.equals("DefaultUser") && storedPassword.isEmpty() && password.isEmpty()) {
+                return true;
+            }
+
+            // Most common case for regular users - check hashed password
+            if (storedPassword.contains(":")) {
+                return PasswordHash.verifyPassword(password, storedPassword);
+            }
+
+            // Legacy case - plain text password
+            if (password.equals(storedPassword)) {
+                // Update to salted hash format for next login
+                updatePassword(username, password);
+                return true;
+            }
+
+            return false;
         } catch (Exception e) {
             ErrorHandler.handleException(context, e, COMPONENT_NAME, "validateUser",
                     ErrorHandler.Severity.ERROR, "Authentication error");
             return false;
         } finally {
-            if (cursor != null) {
-                cursor.close();
-            }
-            if (db != null && db.isOpen()) {
-                db.close();
-            }
+            if (cursor != null) cursor.close();
+            if (db != null && db.isOpen()) db.close();
         }
     }
 
